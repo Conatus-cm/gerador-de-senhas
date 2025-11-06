@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Senhas </title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #070808, #065291);
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+
+    .container {
+        background-color: rgba(0, 0, 0, 0.25);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        width: 340px;
+        text-align: center;
+    }
+
+    h1 {
+        font-size: 1.6em;
+        margin-bottom: 15px;
+    }
+
+    label {
+        display: block;
+        margin: 10px 0 5px;
+        font-weight: bold;
+    }
+
+    input[type="range"] {
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    .exibicao-tamanho {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .opcoes {
+        text-align: left;
+        margin: 10px 0;
+    }
+
+    .opcoes label {
+        display: block;
+        font-weight: normal;
+    }
+
+    button {
+        background-color: #1cc88a;
+        border: none;
+        color: #fff;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        width: 100%;
+        transition: background 0.3s;
+    }
+
+    button:hover {
+        background-color: #17a673;
+    }
+
+    .caixa-senha {
+        margin-top: 15px;
+        background: #fff;
+        color: #333;
+        padding: 10px;
+        border-radius: 5px;
+        font-weight: bold;
+        word-break: break-all;
+    }
+
+    .botao-copiar {
+        background: #4e73df;
+        margin-top: 10px;
+    }
+
+    .botao-copiar:hover {
+        background: #2e59d9;
+    }
+
+    .forca {
+        margin-top: 12px;
+        text-align: left;
+    }
+
+    .barra-forca {
+        height: 8px;
+        width: 100%;
+        background: #ccc;
+        border-radius: 5px;
+        margin-top: 5px;
+        overflow: hidden;
+    }
+
+    .barra {
+        height: 100%;
+        width: 0%;
+        transition: width 0.4s ease, background 0.4s ease;
+    }
+
+    .fraca { background: #e74a3b; }
+    .media { background: #f6c23e; }
+    .moderada { background: #36b9cc; }
+    .forte { background: #1cc88a; }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔐 Gerador de Senhas</h1>
+
+    <label for="tamanho">Comprimento da senha: <span id="valorTamanho">12</span></label>
+    <input type="range" id="tamanho" min="4" max="36" value="12">
+
+    <div class="opcoes">
+        <label><input type="checkbox" id="maiusculas" checked> Incluir letras maiúsculas (A-Z)</label>
+        <label><input type="checkbox" id="minusculas" checked> Incluir letras minúsculas (a-z)</label>
+        <label><input type="checkbox" id="numeros" checked> Incluir números (0-9)</label>
+        <label><input type="checkbox" id="simbolos" checked> Incluir símbolos (@, #, $, %, & ...)</label>
+    </div>
+
+    <div class="caixa-senha" id="caixaSenha">Sua senha aparecerá aqui</div>
+    
+    <div class="forca">
+        <strong>Nível da senha:</strong> <span id="textoForca">---</span>
+        <div class="barra-forca">
+            <div class="barra" id="barraForca"></div>
+        </div>
+    </div>
+
+    <button class="botao-copiar" id="copiar">Copiar Senha</button>
+</div>
+
+<script>
+    const caixaSenha = document.getElementById("caixaSenha");
+    const entradaTamanho = document.getElementById("tamanho");
+    const valorTamanho = document.getElementById("valorTamanho");
+    const botaoCopiar = document.getElementById("copiar");
+    const textoForca = document.getElementById("textoForca");
+    const barraForca = document.getElementById("barraForca");
+
+    const letrasMaiusculas = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const letrasMinusculas = "abcdefghijklmnopqrstuvwxyz";
+    const numeros = "0123456789";
+    const simbolos = "@#$%&*!?_-+=<>";
+
+    // Atualiza senha ao mover a barra
+    entradaTamanho.addEventListener("input", () => {
+        valorTamanho.textContent = entradaTamanho.value;
+        gerarSenha();
+    });
+
+    // Atualiza senha quando opções são alteradas
+    document.querySelectorAll(".opcoes input").forEach(opcao => {
+        opcao.addEventListener("change", gerarSenha);
+    });
+
+    function gerarSenha() {
+        const tamanho = parseInt(entradaTamanho.value);
+        const incluirMaiusculas = document.getElementById("maiusculas").checked;
+        const incluirMinusculas = document.getElementById("minusculas").checked;
+        const incluirNumeros = document.getElementById("numeros").checked;
+        const incluirSimbolos = document.getElementById("simbolos").checked;
+
+        let caracteres = "";
+        if (incluirMaiusculas) caracteres += letrasMaiusculas;
+        if (incluirMinusculas) caracteres += letrasMinusculas;
+        if (incluirNumeros) caracteres += numeros;
+        if (incluirSimbolos) caracteres += simbolos;
+
+        if (caracteres === "") {
+            caixaSenha.textContent = "⚠️ Selecione ao menos uma opção!";
+            textoForca.textContent = "---";
+            barraForca.style.width = "0%";
+            return;
+        }
+
+        let senha = "";
+        for (let i = 0; i < tamanho; i++) {
+            const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
+            senha += caracteres[indiceAleatorio];
+        }
+
+        caixaSenha.textContent = senha;     
+        verificarForca(senha);
+    }
+
+    function verificarForca(senha) {
+        let pontuacao = 0;
+
+        if (senha.length >= 8) pontuacao++;
+        if (senha.length >= 12) pontuacao++;
+        if (/[A-Z]/.test(senha)) pontuacao++;
+        if (/[a-z]/.test(senha)) pontuacao++;
+        if (/[0-9]/.test(senha)) pontuacao++;
+        if (/[@#$%&*!?_\-+=<>]/.test(senha)) pontuacao++;
+
+        let nivel = "";
+        let largura = 0;
+        let cor = "";
+
+        if (pontuacao <= 2) {
+            nivel = "Fraca";
+            largura = "25%";
+            cor = "fraca";
+        } else if (pontuacao <= 3) {
+            nivel = "Média";
+            largura = "50%";
+            cor = "media";
+        } else if (pontuacao <= 4) {
+            nivel = "Moderada";
+            largura = "75%";
+            cor = "moderada";
+        } else {
+            nivel = "Forte";
+            largura = "100%";
+            cor = "forte";
+        }
+
+        textoForca.textContent = nivel;
+        barraForca.className = "barra " + cor;
+        barraForca.style.width = largura;
+    }
+
+    botaoCopiar.addEventListener("click", () => {
+        const senha = caixaSenha.textContent;
+        if (!senha || senha.includes("aparecerá")) {
+            alert("Nenhuma senha para copiar!");
+            return;
+        }
+        navigator.clipboard.writeText(senha);
+        botaoCopiar.textContent = "✅ Copiado!";
+        setTimeout(() => botaoCopiar.textContent = "Copiar Senha", 1500);
+    });
+
+    // Gera senha inicial automaticamente
+    gerarSenha();
+</script>
+
+</body>
+</html>
